@@ -1,9 +1,11 @@
-import 'package:bloc_pattern/state_management/bloc/trade_sinalco_bloc.dart';
-import 'package:bloc_pattern/view/weather_page.dart';
+import 'package:bloc_pattern/bloc/cat_bloc.dart';
+import 'package:bloc_pattern/config/observer/bloc_observer.dart';
+import 'package:bloc_pattern/model/cat_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() {
+  Bloc.observer = MyBlocObserver();
   runApp(MyApp());
 }
 
@@ -13,90 +15,96 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: WeatherPage(),
+      home: CatsUi(),
     );
   }
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class CatsUi extends StatelessWidget {
+  const CatsUi({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => TradeSinalcoBloc(),
+      create: (context) => CatBloc()..add(GetCats()),
       child: Builder(builder: (context) {
         return Scaffold(
           appBar: AppBar(
-            title: TextField(
-              onChanged: (value) {
-                context
-                    .read<TradeSinalcoBloc>()
-                    .add(CutomizeImage(image_name: value));
+            title: BlocListener<CatBloc, CatState>(
+              listener: (context, state) {
+                if (state is SuccessToLoadCatDetails) {
+                  print('object');
+                  ScaffoldMessenger.of(context).showSnackBar(new SnackBar(
+                    duration: Duration(seconds: 10),
+                    content: Text('Please Choose One of The Cats'),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                  ));
+                } else if (state is SuccessToNavigate) {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetailsPage(cat: state.cat),
+                      ));
+                }
               },
+              child: Text('Cats'),
             ),
           ),
-          body: Row(
-            children: [
-              Container(
-                width: 400,
-                height: 400,
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(20)),
-                child: Column(
-                  children: [
-                    IconButton(
-                        onPressed: () {
-                          context.read<TradeSinalcoBloc>().add(SingleSinalco());
-                        },
-                        icon: const Icon(Icons.one_k)),
-                    IconButton(
-                        onPressed: () {
-                          context.read<TradeSinalcoBloc>().add(MultiSinalco());
-                        },
-                        icon: const Icon(Icons.multiline_chart)),
-                  ],
-                ),
-              ),
-              BlocBuilder<TradeSinalcoBloc, TradeSinalcoState>(
-                builder: (context, state) {
-                  if (state is LoadingSinalco) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (state is SuccessToLoadSingle) {
-                    return Container(
-                      width: 400,
-                      height: 400,
-                      decoration: BoxDecoration(
-                          image: DecorationImage(
-                              image: Image.asset('assets/single.jpg').image),
-                          color: Colors.grey,
-                          borderRadius: BorderRadius.circular(20)),
-                    );
-                  } else if (state is SuccessToLoadMulti) {
-                    return Container(
-                      width: 400,
-                      height: 400,
-                      decoration: BoxDecoration(
-                          image: DecorationImage(
-                              image: Image.asset('assets/multi.jpg').image),
-                          color: Colors.grey,
-                          borderRadius: BorderRadius.circular(20)),
-                    );
-                  } else if (state is DisplayImageSuccesfully) {
-                    return Image.network(state.image_to_display);
-                  } else if (state is ErrorImage) {
-                    return Placeholder();
-                  } else {
-                    return Center(
-                      child: Text('please choose your order'),
-                    );
-                  }
-                },
-              )
-            ],
+          body: BlocBuilder<CatBloc, CatState>(
+            builder: (context, state) {
+              if (state is SuccessToLoadCatDetails) {
+                return GridView.builder(
+                  itemCount: state.cats.cats.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 30,
+                      mainAxisSpacing: 20),
+                  itemBuilder: (context, index) => InkWell(
+                    onTap: () {
+                      context.read<CatBloc>().add(
+                          NavigateToCatDetails(cat: state.cats.cats[index]));
+                    },
+                    child: Container(
+                      child: Image.network(state.cats.cats[index].image),
+                    ),
+                  ),
+                );
+              } else if (state is ErrorLoad) {
+                return Center(
+                  child: Text(state.errorModel.Message),
+                );
+              } else {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+            },
           ),
         );
       }),
+    );
+  }
+}
+
+class DetailsPage extends StatelessWidget {
+  DetailsPage({super.key, required this.cat});
+  final CatModel cat;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          Image.network(cat.image),
+          ListTile(
+            title: Text(cat.name),
+            subtitle: Text(cat.origin),
+            leading: CircleAvatar(child: Text(cat.id.toString())),
+            trailing: Text(cat.colors.toString()),
+          )
+        ],
+      ),
     );
   }
 }
