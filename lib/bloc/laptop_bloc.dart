@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:bloc_consumer_example/config/di.dart';
+import 'package:bloc_consumer_example/model/create_new_laptop.dart';
 import 'package:bloc_consumer_example/model/error_model.dart';
 import 'package:bloc_consumer_example/model/exception_model.dart';
 import 'package:bloc_consumer_example/model/laptop_model.dart';
@@ -40,5 +41,23 @@ class LaptopBloc extends Bloc<LaptopEvent, LaptopState> {
       
       }
     });
+
+
+    on<CreateNewLaptop>((event, emit)async{
+      emit(LoadingState());
+      ResultModel result = await addData(event.newLaptop);
+      if (result is CreateNewLaptopModel) {
+        // TODO
+        emit(SuccessLaptopAdd());
+      } else if (result is ExceptionModel) {
+        emit(ExceptionState(exceptionModel: result));
+        emit(FailedToSendRequestLaptop(newLaptop: event.newLaptop));
+        
+      } else if (result is ErrorModel) {
+        emit(ErrorState(errorModel: result));
+      
+      }
+    });
   }
+
 }

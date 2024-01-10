@@ -14,6 +14,11 @@ class SuccessLaptopFetching extends LaptopState {
   });
 }
 
+
+class SuccessLaptopAdd extends LaptopState {
+ 
+}
+
 class SuccessLaptopsFetching extends LaptopState {
   ListOfLaptops laptops;
   SuccessLaptopsFetching({
@@ -45,5 +50,13 @@ class OfflineDataStorage extends LaptopState {
   List<Laptop> laptops;
   OfflineDataStorage({
     required this.laptops,
+  });
+}
+
+
+class FailedToSendRequestLaptop extends LaptopState {
+  CreateNewLaptopModel newLaptop;
+  FailedToSendRequestLaptop({
+    required this.newLaptop,
   });
 }
