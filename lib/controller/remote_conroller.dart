@@ -1,22 +1,23 @@
 import 'package:get/get.dart';
 
 class RemoteData extends GetxController {
-  var result = {}.obs;
+  final result = {}.obs;
 
-  var state = States.INIT.obs;
+  final state = States.INIT.obs;
 
   fetchData() async {
-    state = States.LOADING.obs;
-    update();
+    state.value = States.LOADING;
+    // update();
 
     var temp = await GetConnect()
         .get("https://jsonplaceholder.typicode.com/comments/1");
+        print(temp);
     if (temp.statusCode == 200) {
-      state = States.SUCCESS.obs;
-      update();
+      state.value = States.SUCCESS;
+      // update();
       result.addAll(temp.body);
     } else {
-      state = States.ERROR.obs;
+      state.value = States.ERROR;
     }
   }
 }

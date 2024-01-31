@@ -13,7 +13,7 @@ void main()async {
   channel = WebSocketChannel.connect(wsUrl);
  await channel.ready;
   runApp(const MyApp());
-  
+ 
 }
 
 class MyApp extends StatelessWidget {
